@@ -1,9 +1,9 @@
 ---
 title: "Decision Tree Challenge"
 subtitle: "Feature Importance and Categorical Variable Encoding"
+jupyter: python3
 format:
   html: default
-  pdf: default
 execute:
   echo: true
   eval: true
@@ -11,17 +11,78 @@ execute:
 
 # 🌳 Decision Tree Challenge - Feature Importance and Variable Encoding
 
-## Challenge Overview
+:::: {.callout-important}
+## 📋 What You Need To Do
 
-**Your Mission:** Create a simple GitHub Pages site that demonstrates how decision trees measure feature importance and analyzes the critical differences between categorical and numerical variable encoding. You'll answer two key discussion questions by adding narrative to a pre-built analysis and posting those answers to your GitHub Pages site as a rendered HTML document.
+- [ ] Fork [this repository](https://github.com/flyaflya/decTreeChallenge) to create `decTreeChallenge` in your GitHub
+- [ ] Clone locally and open in Cursor
+- [ ] Write your analysis in this `index.qmd`
+- [ ] Render to HTML (`quarto render` or Render button)
+- [ ] Push HTML to your repo and enable GitHub Pages
+- [ ] Share your site: `https://[your-username].github.io/decTreeChallenge/`
+::::
 
-::: {.callout-warning}
+:::: {.callout-note}
+## 🐍 Python Environment Setup
+
+Before rendering, create a fresh virtual environment and install the required packages:
+
+1. Press `Ctrl+Shift+P` to open the Command Palette
+2. Type **"Python: Select Interpreter"** and select it
+3. Click **"+ Create Virtual Environment..."**
+4. Choose **Venv**
+5. Select your Python installation (e.g., Python 3.12)
+6. Wait for the environment to be created and activated
+
+Then open a terminal and install dependencies:
+
+**Windows:**
+```bash
+py -m pip install jupyter matplotlib pandas scikit-learn
+```
+
+**Mac:**
+```bash
+python3 -m pip install jupyter matplotlib pandas scikit-learn
+```
+::::
+
+:::: {.callout-warning}
 ## ⚠️ AI Partnership Required
 
 This challenge pushes boundaries intentionally. You'll tackle problems that normally require weeks of study, but with Cursor AI as your partner (and your brain keeping it honest), you can accomplish more than you thought possible.
 
 **The new reality:** The four stages of competence are Ignorance → Awareness → Learning → Mastery. AI lets us produce Mastery-level work while operating primarily in the Awareness stage. I focus on awareness training, you leverage AI for execution, and together we create outputs that used to require years of dedicated study.
-:::
+::::
+
+:::: {.callout-important}
+## 📊 Grading Criteria
+
+- **Question 1:** Required. Up to **75%** of the grade.
+- **Question 2:** Up to **95%** of the grade.
+- **Question 3:** Up to **100%** of the grade (extra 5 points -- see warning below Q3).
+
+**Your grade depends on narrative clarity and insight, not just correct code.**
+::::
+
+:::: {.callout-tip}
+## 📝 How to Present Your Analysis
+
+**This is an investigative report, not a coding exercise.** Present your findings like a professional analyst writing a brief about why proper variable encoding matters in machine learning.
+
+- **Q&A Format:** Each discussion question clearly stated, followed by your answer with analysis and interpretation.
+- **Delete All Instructions:** Remove all challenge instructions, setup guides, and grading criteria from your final rendered HTML. The final report should contain only the analysis and your discussion responses.
+- **Hide Code:** Tell a narrative and visual story using `echo: false`; the code can be referenced in your GitHub `*.qmd` source file.
+- **Concise and Human:** No AI babble. Tell the story of what you discovered, focus on insights, and write like a data science consultant.
+
+**What we're looking for:** A compelling 1-2 minute read that demonstrates both the power of decision trees for interpretability and the critical importance of proper variable encoding.
+::::
+
+:::: {.callout-warning}
+## 💾 Save Your Work Frequently!
+
+Commit often using Source Control (Ctrl+Shift+G). Commit after completing each analysis step, after finishing each discussion question, and before asking AI for help with new code.
+::::
 
 ## The Decision Tree Problem 🎯
 
@@ -101,23 +162,21 @@ print(f"Model built with {tree_model.get_n_leaves()} terminal nodes")
 ```{python}
 #| label: visualize-tree-python
 #| echo: true
-#| fig-width: 10
+#| fig-width: 8
 #| fig-height: 6
 
 # Visualize tree
-plt.figure(figsize=(10, 6))
+plt.figure(figsize=(8, 6))
 plot_tree(tree_model, 
           feature_names=X_train.columns,
           filled=True, 
           rounded=True,
-          fontsize=10,
+          fontsize=7,
           max_depth=3)
 plt.title("Decision Tree (zipCode as Numerical)")
 plt.tight_layout()
 plt.show()
 ```
-
-:::
 
 ## Feature Importance Analysis
 
@@ -172,248 +231,179 @@ plt.show()
 **The Real Issue:** Zip codes are categorical variables representing discrete geographic areas. The numerical values have no inherent order or magnitude relationship to house prices.  These must be modelled as categorical variables.
 :::
 
-## Proper Categorical Encoding: The Solution
+## Isolating the Encoding Effect
 
-Now let's repeat the analysis with zipCode properly encoded as categorical variables to see the difference.
+In the full model above, `zipCode` competes against 8 other strong numerical predictors and never gets chosen for a split. That makes it hard to tell whether zip code is truly unimportant or whether the encoding is hiding its value. Let's isolate the effect by building a simplified model that uses **only** `GrLivArea` and `zipCode` as predictors, treating zip code as numerical.
 
-**Python Approach:** One-hot encode zipCode (create dummy variables for each zip code)
-
-### Categorical Encoding Analysis
-
-### Python
+### Simplified Model: GrLivArea + zipCode (Numerical)
 
 ```{python}
-#| label: categorical-python
+#| label: simplified-numerical
 #| echo: true
-#| include: false
-# One-hot encode zipCode
-import pandas as pd
 
-# Create one-hot encoded zipCode
-zipcode_encoded = pd.get_dummies(model_data['zipCode'], prefix='zipCode')
-model_data_cat = pd.concat([model_data.drop('zipCode', axis=1), zipcode_encoded], axis=1)
+X_simple_num = model_data[['GrLivArea', 'zipCode']]
+y_simple = model_data['SalePrice']
 
-# Split data
-X_cat = model_data_cat.drop('SalePrice', axis=1)
-y_cat = model_data_cat['SalePrice']
-X_train_cat, X_test_cat, y_train_cat, y_test_cat = train_test_split(X_cat, y_cat, test_size=0.2, random_state=123)
+X_train_sn, X_test_sn, y_train_sn, y_test_sn = train_test_split(
+    X_simple_num, y_simple, test_size=0.2, random_state=123)
 
-# Build decision tree with one-hot encoded zipCode
-tree_model_cat = DecisionTreeRegressor(max_depth=3, 
-                                      min_samples_split=20, 
-                                      min_samples_leaf=10, 
-                                      random_state=123)
-tree_model_cat.fit(X_train_cat, y_train_cat)
+tree_simple_num = DecisionTreeRegressor(
+    max_depth=3, min_samples_split=20, min_samples_leaf=10, random_state=123)
+tree_simple_num.fit(X_train_sn, y_train_sn)
 
-# Feature importance with one-hot encoded zipCode
-importance_cat_df = pd.DataFrame({
-    'Feature': X_train_cat.columns,
-    'Importance': tree_model_cat.feature_importances_
-}).sort_values('Importance', ascending=False)
-
-importance_cat_df['Importance_Percent'] = (importance_cat_df['Importance'] * 100).round(2)
-
-# Check zipCode features
-zipcode_features = [col for col in X_train_cat.columns if col.startswith('zipCode')]
-zipcode_importance = importance_cat_df[importance_cat_df['Feature'].isin(zipcode_features)]['Importance'].sum()
-total_importance = importance_cat_df['Importance'].sum()
-zipcode_percent = (zipcode_importance / total_importance * 100).round(2)
+r2_num = r2_score(y_test_sn, tree_simple_num.predict(X_test_sn))
+print(f"Test R² (numerical zipCode): {r2_num:.4f}")
 ```
 
-### Tree Visualization: Categorical zipCode
-
-### Python
-
 ```{python}
-#| label: visualize-tree-cat-python
-#| echo: true
-#| fig-width: 10
+#| label: simplified-numerical-tree
+#| echo: false
+#| fig-width: 8
 #| fig-height: 6
 
-# Visualize tree with one-hot encoded zipCode
-plt.figure(figsize=(10, 6))
-plot_tree(tree_model_cat, 
-          feature_names=X_train_cat.columns,
-          filled=True, 
-          rounded=True,
-          fontsize=8,
-          max_depth=4)
-plt.title("Decision Tree (zipCode One-Hot Encoded)")
+plt.figure(figsize=(8, 6))
+plot_tree(tree_simple_num,
+          feature_names=['GrLivArea', 'zipCode'],
+          filled=True, rounded=True, fontsize=7, max_depth=3)
+plt.title("Simplified Tree: GrLivArea + zipCode (Numerical)")
 plt.tight_layout()
 plt.show()
 ```
 
-### Feature Importance: Categorical zipCode
-
-### Python
 ```{python}
-#| label: importance-plot-cat-python
+#| label: simplified-numerical-importance
 #| echo: false
 #| fig-width: 8
-#| fig-height: 5
+#| fig-height: 3
 
-# Plot feature importance for categorical zipCode
-plt.figure(figsize=(8, 5))
-plt.barh(range(len(importance_cat_df)), importance_cat_df['Importance'], 
-         color='darkgreen', alpha=0.7)
-plt.yticks(range(len(importance_cat_df)), importance_cat_df['Feature'])
+imp_sn = pd.DataFrame({
+    'Feature': ['GrLivArea', 'zipCode'],
+    'Importance': tree_simple_num.feature_importances_
+}).sort_values('Importance', ascending=False)
+
+plt.figure(figsize=(8, 3))
+plt.barh(range(len(imp_sn)), imp_sn['Importance'], color='steelblue', alpha=0.7)
+plt.yticks(range(len(imp_sn)), imp_sn['Feature'])
 plt.xlabel('Importance Score')
-plt.title('Feature Importance (zipCode One-Hot Encoded)')
+plt.title('Feature Importance: GrLivArea + zipCode (Numerical)')
 plt.gca().invert_yaxis()
 plt.tight_layout()
 plt.show()
 ```
 
-## Challenge Requirements 📋
+### Visualizing the Zip Code Effect
 
-### Minimum Requirements for Any Points on Challenge
+The tree above ignores zip code entirely -- every split is on `GrLivArea`. But does zip code actually matter for house prices? Before trying a different encoding, let's look at the raw data. If zip codes don't separate prices, there's nothing to fix. If they do, the numerical encoding is hiding real signal.
 
-1. **Create a GitHub Pages Site:** Use the starter repository (see Repository Setup section below) to begin with a working template. The repository includes all the analysis code and visualizations above.
+```{python}
+#| label: zipcode-scatter
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
 
-2. **Add Discussion Narrative:** Add your answers to the two discussion questions below in the Discussion Questions section of the rendered HTML.
+top_zips = model_data['zipCode'].value_counts().head(6).index.tolist()
+plot_data = model_data.copy()
+plot_data['zip_group'] = plot_data['zipCode'].apply(
+    lambda z: str(z) if z in top_zips else 'Other')
 
-3. **GitHub Repository:** Use your forked repository (from the starter repository) named "decTreeChallenge" in your GitHub account.
+markers = ['o', 's', '^', 'D', 'v', 'P']
+colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#a65628']
+top_groups = sorted([g for g in plot_data['zip_group'].unique() if g != 'Other'])
 
-4. **GitHub Pages Setup:** The repository should be made the source of your github pages:
+fig, ax = plt.subplots(figsize=(8, 6))
 
-   - Go to your repository settings (click the "Settings" tab in your GitHub repository)
-   - Scroll down to the "Pages" section in the left sidebar
-   - Under "Source", select "Deploy from a branch"
-   - Choose "main" branch and "/ (root)" folder
-   - Click "Save"
-   - Your site will be available at: `https://[your-username].github.io/decTreeChallenge/`
-   - **Note:** It may take a few minutes for the site to become available after enabling Pages
+other = plot_data[plot_data['zip_group'] == 'Other']
+ax.scatter(other['GrLivArea'], other['SalePrice'],
+           marker='.', color='#cccccc', alpha=0.35, s=20,
+           label='Other', zorder=1)
 
-## Getting Started: Repository Setup 🚀
+for i, grp in enumerate(top_groups):
+    subset = plot_data[plot_data['zip_group'] == grp]
+    ax.scatter(subset['GrLivArea'], subset['SalePrice'],
+               marker=markers[i], color=colors[i],
+               alpha=0.8, s=35, label=grp, zorder=2)
+
+ax.set_xlabel('Above-Grade Living Area (sq ft)')
+ax.set_ylabel('Sale Price ($)')
+ax.set_title('Sale Price vs. Living Area by Zip Code')
+ax.legend(title='Zip Code', bbox_to_anchor=(1.02, 1), loc='upper left',
+          fontsize=8, title_fontsize=9)
+plt.tight_layout()
+plt.show()
+```
+
+The scatter plot makes the case visually: different zip codes cluster at different price levels, even for houses with the same living area. A 1,500 sq ft house in one zip code can sell for dramatically more than the same-sized house in another. Zip code clearly matters -- so why does the numerical tree ignore it?
+
+The answer is encoding. A numerical split like "zipCode > 50012.5" has no meaningful relationship to price. To let the tree see zip code differences, we can one-hot encode the top zip codes and rebuild the model.
+
+### One-Hot Encoding the Top Zip Codes
+
+```{python}
+#| label: onehot-topn-tree
+#| echo: true
+
+zip_dummies = pd.get_dummies(
+    model_data['zipCode'].apply(lambda z: str(z) if z in top_zips else 'Other'),
+    prefix='zip')
+X_onehot = pd.concat([model_data[['GrLivArea']], zip_dummies], axis=1)
+
+X_train_oh, X_test_oh, y_train_oh, y_test_oh = train_test_split(
+    X_onehot, y_simple, test_size=0.2, random_state=123)
+
+tree_onehot = DecisionTreeRegressor(
+    max_depth=3, min_samples_split=20, min_samples_leaf=10, random_state=123)
+tree_onehot.fit(X_train_oh, y_train_oh)
+
+r2_oh = r2_score(y_test_oh, tree_onehot.predict(X_test_oh))
+print(f"Test R² (one-hot top zips, depth=3): {r2_oh:.4f}")
+```
+
+```{python}
+#| label: onehot-topn-tree-plot
+#| echo: false
+#| fig-width: 8
+#| fig-height: 6
+
+plt.figure(figsize=(8, 6))
+plot_tree(tree_onehot,
+          feature_names=X_train_oh.columns,
+          filled=True, rounded=True, fontsize=7, max_depth=3)
+plt.title("Simplified Tree: GrLivArea + Top Zip Codes (One-Hot, depth=2)")
+plt.tight_layout()
+plt.show()
+```
 
 ::: {.callout-important}
-## 📁 Quick Start with Starter Repository
+## What the One-Hot Tree Reveals
 
-**Step 1:** Fork the starter repository to your github account at [https://github.com/flyaflya/decTreeChallenge.git](https://github.com/flyaflya/decTreeChallenge.git)
+With one-hot encoding, the tree can now ask "is this house in zip code 50027?" -- and it does. The tree isolates specific zip codes as meaningful predictors, something the numerical encoding could never achieve. Notice how zip code 50027 appears as a split that identifies a lower-priced neighborhood cluster.
 
-**Step 2:** Clone your fork locally using Cursor (or VS Code)
-
-**Step 3:** You're ready to start! The repository includes pre-loaded data and a working template with all the analysis above.
-:::
-
-::: {.callout-tip}
-## 💡 Why Use the Starter Repository?
-
-**Benefits:**
-
-- **Pre-loaded data:** All required data and analysis code is included
-- **Working template:** Basic Quarto structure (`index.qmd`) is ready
-- **No setup errors:** Avoid common data loading issues
-- **Focus on analysis:** Spend time on the discussion questions, not data preparation
-:::
-
-### Getting Started Tips
-
-::: {.callout-note}
-## 🎯 Navy SEALs Motto
-
-> "Slow is Smooth and Smooth is Fast"
-
-*Take your time to understand the decision tree mechanics, plan your approach carefully, and execute with precision. Rushing through this challenge will only lead to errors and confusion.*
-:::
-
-::: {.callout-warning}
-## 💾 Important: Save Your Work Frequently!
-
-**Before you start:** Make sure to commit your work often using the Source Control panel in Cursor (Ctrl+Shift+G or Cmd+Shift+G). This prevents the AI from overwriting your progress and ensures you don't lose your work.
-
-**Commit after each major step:**
-
-- After adding your discussion answers
-- After rendering to HTML
-- Before asking the AI for help with new code
-
-**How to commit:**
-
-1. Open Source Control panel (Ctrl+Shift+G)
-2. Stage your changes (+ button)
-3. Write a descriptive commit message
-4. Click the checkmark to commit
-
-*Remember: Frequent commits are your safety net!*
+However, one-hot encoding has its own limitations: each zip code becomes its own binary column, and the tree can only ask about one zip code at a time per split. A truly categorical-aware algorithm could instead split on *subsets* of zip codes in a single decision -- for example, {50022, 50015} vs. {50027, 50013, ...} -- capturing richer groupings. That is the frontier explored in Question 3 below.
 :::
 
 ## Discussion Questions for Challenge
 
-**Your Task:** Add thoughtful narrative answers to these two questions in the Discussion Questions section of your rendered HTML site.
+**Your Task:** Add thoughtful narrative answers to these questions in the Discussion Questions section of your rendered HTML site.
 
-1. **Numerical vs Categorical Encoding:** There are two modelsin Python written above. For each language, the models differ by how zip code is modelled, either as a numerical variable or as a categorical variable. Given what you know about zip codes and real estate prices, how should zip code be modelled, numerically or categorically?  Is zipcode and ordinal or non-ordinal variable?
+1. **Numerical vs Categorical Encoding:** In the simplified model above, zip code is treated as a numerical variable. Look at the tree and the scatter plot. Given what you know about zip codes and real estate prices, how should zip code be modelled, numerically or categorically? Is zipcode an ordinal or non-ordinal variable?
 
 2. **R vs Python Implementation Differences:** When modelling zip code as a categorical variable, the output tree and feature importance would differ quite significantly had you used R as opposed to Python. Investigate why this is the case.  What does R offer that Python does not? Which language would you say does a better job of modelling zip code as a categorical variable? Can you quote the documentation at [https://scikit-learn.org/stable/modules/tree.html](https://scikit-learn.org/stable/modules/tree.html) suggesting a weakness in the Python implementation? If so, please provide a quote from the documentation.
 
-3. **Are There Any Suggestions for Implementing Decision Trees in Python With Prioper Categorical Handling?** Please poke around the Internet (AI is not as helpful with new libraries) for suggestions on how to implement decision trees in Python with better (i.e. not one-hot encoding) categorical handling.  Please provide a link to the source and a quote from the source.  There is not right answer here, but please provide a thoughtful answer, I am curious to see what you find.
+3. **Can You Get a Decision Tree in Python That Splits on Subsets of Zip Codes?** Find a Python package that handles categorical variables natively (i.e. not one-hot encoding) and re-run the simplified model (`GrLivArea` + `zipCode`) using it.  Does the resulting tree split on *clusters* or *subsets* of zip codes rather than numerical thresholds?  Show the tree and discuss what you find.
 
-## Grading Rubric 🎓
+:::: {.callout-warning}
+## ⚠️ Fair Warning on Question 3
 
-::: {.callout-important}
-## 📊 What You're Really Being Graded On
-
-**This is an investigative report, not a coding exercise.** You're analyzing decision tree models and reporting your findings like a professional analyst would. Think of this as a brief you'd write for a client or manager about why proper variable encoding matters in machine learning.
-
-**What makes a great report:**
-
-- **Clear narrative:** Tell the story of what you discovered about decision tree feature importance
-- **Insightful analysis:** Focus on the most interesting differences between numerical and categorical encoding
-- **Professional presentation:** Clean, readable, and engaging
-- **Concise conclusions:** No AI babble or unnecessary technical jargon
-- **Human insights:** Your interpretation of what the feature importance rankings actually mean (or don't mean)
-- **Documentation-based analysis:** For question 2, ground your analysis in actual library documentation
-
-**What we're looking for:** A compelling 1-2 minute read that demonstrates both the power of decision trees for interpretability and the critical importance of proper variable encoding.  And a note on the current state of the art in decision tree implementation for categorical variables in Python.
-:::
-
-### Questions to Answer for 75% Grade on Challenge
-
-1. **Numerical vs Categorical Analysis:** Provide a clear, well-reasoned answer to question 1 about how zip codes should be modelled. Your answer should demonstrate understanding of why categorical variables need special treatment in decision trees.
-
-### Questions to Answer for 85% Grade on Challenge
-
-2. **R vs Python Implementation Analysis:** Provide a thorough analysis of question 2, including investigation of the official documentation for both `rpart` (R) and `sklearn.tree.DecisionTreeRegressor` (Python). Your analysis should explain the technical differences and provide a reasoned opinion about which implementation handles categorical variables better.  You do NOT have to run R-code.
-
-### Questions to Answer for 95% - 100% Grade on Challenge
-
-3. **Professional Presentation:** Your discussion answers should be written in a professional, engaging style that would be appropriate for a business audience learning about one-hot encoding and decision trees. Avoid technical jargon and focus on practical implications.  Include a specific quote from the official documentation of `sklearn.tree.DecisionTreeRegressor` that supports your analysis. 
+This last question is worth only 5 points (the difference between 95% and 100%). Finding and getting a new package to work can be time-consuming and frustrating -- especially when documentation is sparse and AI assistants have limited knowledge of newer libraries. **Be prepared to abort this attempt if it's eating too much of your time.** A solid 95% is an excellent grade; don't let a 5-point stretch goal turn into a multi-hour rabbit hole.
+::::
 
 ## Submission Checklist ✅
 
-**Minimum Requirements (Required for Any Points):**
-
-- [ ] Forked starter repository from [https://github.com/flyaflya/decTreeChallenge.git](https://github.com/flyaflya/decTreeChallenge.git)
+- [ ] Forked starter repository from [https://github.com/flyaflya/decTreeChallenge](https://github.com/flyaflya/decTreeChallenge)
 - [ ] Cloned repository locally using Cursor (or VS Code)
-- [ ] Added thoughtful narrative answers to both discussion questions
+- [ ] Analysis written in `index.qmd` with clear Q&A narrative
 - [ ] Document rendered to HTML successfully
-- [ ] HTML files uploaded to your forked repository
-- [ ] GitHub Pages enabled and working
+- [ ] HTML committed and pushed to your forked repository
+- [ ] GitHub Pages enabled (Deploy from a branch → main → /(root))
 - [ ] Site accessible at `https://[your-username].github.io/decTreeChallenge/`
-
-**75% Grade Requirements:**
-
-- [ ] Clear, well-reasoned answer to question 1 about numerical vs categorical encoding
-
-**85% Grade Requirements:**
-
-- [ ] Thorough analysis of question 2 with investigation of official documentation
-
-**95% Grade Requirements:**
-
-- [ ] Professional presentation style appropriate for business audience.
-- [ ] Specific quote from official documentation of `sklearn.tree.DecisionTreeRegressor` supporting your analysis
-
-**100% Grade Requirements:**
-
-- [ ] Note on the current state of the art in decision tree implementation for categorical variables in Python.
-
-**Report Quality (Critical for Higher Grades):**
-
-- [ ] Clear, engaging narrative that tells a story
-- [ ] Focus on the most interesting findings about decision tree feature importance
-- [ ] Professional writing style (no AI-generated fluff)
-- [ ] Concise analysis that gets to the point
-- [ ] Practical insights that would help a real data scientist
-- [ ] Documentation-based analysis for technical questions
 
